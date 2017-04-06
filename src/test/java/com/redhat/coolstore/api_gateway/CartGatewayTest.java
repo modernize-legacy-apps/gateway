@@ -141,7 +141,7 @@ public class CartGatewayTest {
     private String genTestData(){
     	ObjectMapper mapper = new ObjectMapper();
     	ShoppingCart cart = new ShoppingCart();
-    	Product product = new Product("ID1", "Test Product", "Test Product", 10, null);
+    	Product product = new Product("ID1", "Test Product", "Test Product", 10);
     	ShoppingCartItem item = new ShoppingCartItem(product,2, 3);
     	List<ShoppingCartItem> items = new ArrayList<ShoppingCartItem>();
     	items.add(item);

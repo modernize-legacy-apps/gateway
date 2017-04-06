@@ -19,6 +19,9 @@ package com.redhat.coolstore.api_gateway;
 import com.redhat.coolstore.api_gateway.model.Inventory;
 import com.redhat.coolstore.api_gateway.model.Product;
 import org.apache.camel.Exchange;
+import org.apache.camel.Message;
+import org.apache.camel.Predicate;
+import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jackson.JacksonDataFormat;
 import org.apache.camel.component.jackson.ListJacksonDataFormat;
@@ -31,6 +34,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class ProductGateway extends RouteBuilder {
@@ -67,10 +73,22 @@ public class ProductGateway extends RouteBuilder {
                 	.removeHeaders("CamelHttp*")
                 	.recipientList(simple("http4://{{env:CATALOG_ENDPOINT:catalog:8080}}/api/catalog")).end()
                 	.unmarshal(productFormatter)
+
+//
+// Uncomment the below lines to filter out products
+//
+//				.process(exchange -> {
+//                    List<Product> originalProductList = (List<Product>)exchange.getIn().getBody(List.class);
+//                    List<Product> newProductList = originalProductList.stream().filter(product ->
+//							!("329299".equals(product.itemId)))
+//						.collect(Collectors.toList());
+//                    exchange.getIn().setBody(newProductList);
+//                })
+
 	                .split(body()).parallelProcessing()
 	                .enrich("direct:inventory", new InventoryEnricher())
 	            .end()
-	            
+
         .endRest();
 
         from("direct:inventory")
@@ -93,7 +111,9 @@ public class ProductGateway extends RouteBuilder {
             // Add the discovered availability to the product and set it back
             Product p = original.getIn().getBody(Product.class);
             Inventory i = resource.getIn().getBody(Inventory.class);
-            p.setAvailability(i);
+            p.setQuantity(i.getQuantity());
+            p.setLocation(i.getLocation());
+            p.setLink(i.getLink());
             original.getOut().setBody(p);
             log.info("------------------->"+p);
             
