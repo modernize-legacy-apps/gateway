@@ -53,7 +53,7 @@ public class ProductGatewayTest {
     	Inventory inventory = new Inventory("ID1", 5, "Westford", "http://developers.redhat.com");
     	
     	List<Product> products = new ArrayList<Product>();
-    	products.add(new Product("ID1", "Test Product", "Test Product", 10, null));
+    	products.add(new Product("ID1", "Test Product", "Test Product", 10));
     	
     	String productResponseStr = mapper.writeValueAsString(products);
     	String inventoryResponseStr = mapper.writeValueAsString(inventory);
