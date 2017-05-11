@@ -31,8 +31,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+
 //
-// Uncomment the below lines to filter out products
+// Uncomment the below lines to import required classes to filter out products
 //
 import java.util.List;
 import java.util.stream.Collectors;
@@ -75,13 +76,13 @@ public class ProductGateway extends RouteBuilder {
 									//
 									// Uncomment the below lines to filter out products
 									//
-													.process(exchange -> {
-									                    List<Product> originalProductList = (List<Product>)exchange.getIn().getBody(List.class);
-									                    List<Product> newProductList = originalProductList.stream().filter(product ->
-																!("329299".equals(product.itemId)))
-															.collect(Collectors.toList());
-									                    exchange.getIn().setBody(newProductList);
-									                })
+									//				.process(exchange -> {
+									//                    List<Product> originalProductList = (List<Product>)exchange.getIn().getBody(List.class);
+									//                    List<Product> newProductList = originalProductList.stream().filter(product ->
+									//							!("329299".equals(product.itemId)))
+									//						.collect(Collectors.toList());
+									//                    exchange.getIn().setBody(newProductList);
+									//                })
 
 	                .split(body()).parallelProcessing()
 	                .enrich("direct:inventory", new InventoryEnricher())
