@@ -72,16 +72,16 @@ public class ProductGateway extends RouteBuilder {
                 	.removeHeaders("CamelHttp*")
                 	.recipientList(simple("http4://{{env:CATALOG_ENDPOINT:catalog:8080}}/api/catalog")).end()
                 	.unmarshal(productFormatter)
-//
-// Uncomment the below lines to filter out products
-//
-									.process(exchange -> {
-									                   		List<Product> originalProductList = (List<Product>)exchange.getIn().getBody(List.class);
-									                    	List<Product> newProductList = originalProductList.stream().filter(product ->
-																				!("329299".equals(product.itemId)))
-																				.collect(Collectors.toList());
-									                    	exchange.getIn().setBody(newProductList);
-									                			})
+									//
+									// Uncomment the below lines to filter out products
+									//
+													.process(exchange -> {
+									                    List<Product> originalProductList = (List<Product>)exchange.getIn().getBody(List.class);
+									                    List<Product> newProductList = originalProductList.stream().filter(product ->
+																!("329299".equals(product.itemId)))
+															.collect(Collectors.toList());
+									                    exchange.getIn().setBody(newProductList);
+									                })
 
 	                .split(body()).parallelProcessing()
 	                .enrich("direct:inventory", new InventoryEnricher())
