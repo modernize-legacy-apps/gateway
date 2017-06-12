@@ -32,17 +32,23 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
+//
+// Uncomment the below lines to import required classes to filter out products
+//
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
 public class ProductGateway extends RouteBuilder {
 	private static final Logger LOG = LoggerFactory.getLogger(ProductGateway.class);
 
 	@Autowired
 	private Environment env;
-	
+
     @Override
     public void configure() throws Exception {
     	try {
-    		getContext().setTracing(Boolean.parseBoolean(env.getProperty("ENABLE_TRACER", "false")));	
+    		getContext().setTracing(Boolean.parseBoolean(env.getProperty("ENABLE_TRACER", "false")));
 		} catch (Exception e) {
 			LOG.error("Failed to parse the ENABLE_TRACER value: {}", env.getProperty("ENABLE_TRACER", "false"));
 		}
@@ -67,15 +73,26 @@ public class ProductGateway extends RouteBuilder {
                 	.removeHeaders("CamelHttp*")
                 	.recipientList(simple("http4://{{env:CATALOG_ENDPOINT:catalog:8080}}/api/catalog")).end()
                 	.unmarshal(productFormatter)
+									//
+									// Uncomment the below lines to filter out products
+									//
+									//				.process(exchange -> {
+									//                    List<Product> originalProductList = (List<Product>)exchange.getIn().getBody(List.class);
+									//                    List<Product> newProductList = originalProductList.stream().filter(product ->
+									//							!("329299".equals(product.itemId)))
+									//						.collect(Collectors.toList());
+									//                    exchange.getIn().setBody(newProductList);
+									//                })
+
 	                .split(body()).parallelProcessing()
 	                .enrich("direct:inventory", new InventoryEnricher())
 	            .end()
-	            
+
         .endRest();
 
         from("direct:inventory")
             .id("inventoryRoute")
-            .setHeader("itemId", simple("${body.itemId}"))            
+            .setHeader("itemId", simple("${body.itemId}"))
 			.setBody(simple("null"))
 			.removeHeaders("CamelHttp*")
 			.recipientList(simple("http4://{{env:INVENTORY_ENDPOINT:inventory:8080}}/api/inventory/${header.itemId}")).end()
@@ -83,7 +100,7 @@ public class ProductGateway extends RouteBuilder {
             .unmarshal().json(JsonLibrary.Jackson, Inventory.class);
 
 
-        
+
     }
 
     private class InventoryEnricher implements AggregationStrategy {
@@ -96,7 +113,7 @@ public class ProductGateway extends RouteBuilder {
             p.setAvailability(i);
             original.getOut().setBody(p);
             log.info("------------------->"+p);
-            
+
             return original;
 
         }
